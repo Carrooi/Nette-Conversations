@@ -1,0 +1,12 @@
+conversations:
+
+	conversationClass: CarrooiTests\ConversationsApp\Model\Entities\Conversation
+	conversationItemClass: CarrooiTests\ConversationsApp\Model\Entities\ConversationItem
+
+	attachments:
+		CarrooiTests\ConversationsApp\Model\Entities\Book: book
+
+
+services:
+
+	- CarrooiTests\ConversationsApp\Model\Facades\Books
