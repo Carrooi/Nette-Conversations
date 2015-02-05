@@ -80,7 +80,7 @@ class ConversationsRelationsSubscriber extends Object implements Subscriber
 				}
 
 				$metadata->setAssociationOverride($field, [
-					'type' => ClassMetadataInfo::ONE_TO_MANY,
+					'type' => ClassMetadataInfo::MANY_TO_ONE,
 					'targetEntity' => $assocClass,
 					'fieldName' => $field,
 					'inversedBy' => self::ASSOCIATION_FIELD_NAME,
