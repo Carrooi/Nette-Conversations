@@ -4,7 +4,6 @@ namespace Carrooi\Conversations\Model\Facades;
 
 use Carrooi\Conversations\InvalidArgumentException;
 use Carrooi\Conversations\InvalidStateException;
-use Carrooi\Conversations\Model\Entities\ConversationMessage;
 use Carrooi\Conversations\Model\Entities\ConversationUserThread;
 use Carrooi\Conversations\Model\Entities\IConversation;
 use Carrooi\Conversations\Model\Entities\IConversationAttachment;
@@ -32,6 +31,9 @@ class ConversationsFacade extends Object
 	/** @var \Carrooi\Conversations\Model\Facades\EntitiesProvider */
 	private $entitiesProvider;
 
+	/** @var \Carrooi\Conversations\Model\Facades\UsersFacade */
+	private $users;
+
 	/** @var \Kdyby\Doctrine\EntityDao */
 	private $daoConversations;
 
@@ -41,24 +43,22 @@ class ConversationsFacade extends Object
 	/** @var \Kdyby\Doctrine\EntityDao */
 	private $daoItems;
 
-	/** @var \Kdyby\Doctrine\EntityDao */
-	private $daoUsers;
-
 
 	/**
 	 * @param \Kdyby\Doctrine\EntityManager $em
 	 * @param \Carrooi\Conversations\Model\Facades\AssociationsManager $associationsManager
 	 * @param \Carrooi\Conversations\Model\Facades\EntitiesProvider $entitiesProvider
+	 * @param \Carrooi\Conversations\Model\Facades\UsersFacade $users
 	 */
-	public function __construct(EntityManager $em, AssociationsManager $associationsManager, EntitiesProvider $entitiesProvider)
+	public function __construct(EntityManager $em, AssociationsManager $associationsManager, EntitiesProvider $entitiesProvider, UsersFacade $users)
 	{
 		$this->em = $em;
 		$this->associationsManager = $associationsManager;
 		$this->entitiesProvider = $entitiesProvider;
+		$this->users = $users;
 
 		$this->daoConversations = $em->getRepository('Carrooi\Conversations\Model\Entities\IConversation');
 		$this->daoUserThreads = $em->getRepository(ConversationUserThread::getClassName());
-		$this->daoUsers = $em->getRepository('Carrooi\Conversations\Model\Entities\IUser');
 		$this->daoItems = $em->getRepository('Carrooi\Conversations\Model\Entities\IConversationItem');
 	}
 
@@ -115,22 +115,6 @@ class ConversationsFacade extends Object
 			->andWhere('cut.user = :user')->setParameter('user', $user)
 			->andWhere('cut.allowed = TRUE')
 			->andWhere('ci.readAt IS NULL')
-			->getQuery();
-
-		return new ResultSet($query);
-	}
-
-
-	/**
-	 * @param \Carrooi\Conversations\Model\Entities\IConversation $conversation
-	 * @return \Kdyby\Doctrine\ResultSet|\Carrooi\Conversations\Model\Entities\IUser[]
-	 */
-	public function findAllUsersInConversation(IConversation $conversation)
-	{
-		$query = $this->daoUsers->createQueryBuilder('u')
-			->join('Carrooi\Conversations\Model\Entities\ConversationUserThread', 'cut', Join::WITH, 'cut.user = u')
-			->andWhere('cut.conversation = :conversation')->setParameter('conversation', $conversation)
-			->andWhere('cut.allowed = TRUE')
 			->getQuery();
 
 		return new ResultSet($query);
@@ -326,7 +310,7 @@ class ConversationsFacade extends Object
 		$this->em->transactional(function() use ($conversation, $sender, $attachment) {
 			$this->addItemToConversation($conversation, $sender, $attachment);		// store original
 
-			$users = $this->findAllUsersInConversation($conversation);
+			$users = $this->users->findAllUsersInConversation($conversation);
 			foreach ($users as $user) {
 				$this->addItemToConversation($conversation, $sender, $attachment, $user);
 			}
@@ -467,16 +451,6 @@ class ConversationsFacade extends Object
 	public function countUnreadByUser(IUser $user)
 	{
 		return $this->findAllUnreadByUser($user)->getTotalCount();
-	}
-
-
-	/**
-	 * @param \Carrooi\Conversations\Model\Entities\IConversation $conversation
-	 * @return int
-	 */
-	public function countUsersInConversation(IConversation $conversation)
-	{
-		return $this->findAllUsersInConversation($conversation)->getTotalCount();
 	}
 
 }

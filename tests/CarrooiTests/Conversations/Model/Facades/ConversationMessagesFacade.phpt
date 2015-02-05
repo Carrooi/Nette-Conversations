@@ -22,7 +22,6 @@ class ConversationMessagesFacadeTest extends TestCase
 {
 
 
-
 	/** @var \Carrooi\Conversations\Model\Facades\ConversationMessagesFacade */
 	private $messages;
 
