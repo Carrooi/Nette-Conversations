@@ -2,7 +2,7 @@
 
 namespace Carrooi\Conversations\DI;
 
-use Carrooi\Favorites\InvalidArgumentException;
+use Carrooi\Conversations\InvalidArgumentException;
 use Kdyby\Doctrine\DI\IEntityProvider;
 use Kdyby\Doctrine\DI\ITargetEntityProvider;
 use Kdyby\Events\DI\EventsExtension;
