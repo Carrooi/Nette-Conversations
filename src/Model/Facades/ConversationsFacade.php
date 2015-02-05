@@ -34,6 +34,9 @@ class ConversationsFacade extends Object
 	/** @var \Carrooi\Conversations\Model\Facades\UsersFacade */
 	private $users;
 
+	/** @var \Carrooi\Conversations\Model\Facades\ConversationUserThreadsFacade */
+	private $userThreads;
+
 	/** @var \Kdyby\Doctrine\EntityDao */
 	private $daoConversations;
 
@@ -49,13 +52,17 @@ class ConversationsFacade extends Object
 	 * @param \Carrooi\Conversations\Model\Facades\AssociationsManager $associationsManager
 	 * @param \Carrooi\Conversations\Model\Facades\EntitiesProvider $entitiesProvider
 	 * @param \Carrooi\Conversations\Model\Facades\UsersFacade $users
+	 * @param \Carrooi\Conversations\Model\Facades\ConversationUserThreadsFacade $userThreads
 	 */
-	public function __construct(EntityManager $em, AssociationsManager $associationsManager, EntitiesProvider $entitiesProvider, UsersFacade $users)
+	public function __construct(EntityManager $em, AssociationsManager $associationsManager, EntitiesProvider $entitiesProvider, UsersFacade $users, ConversationUserThreadsFacade $userThreads)
 	{
 		$this->em = $em;
 		$this->associationsManager = $associationsManager;
 		$this->entitiesProvider = $entitiesProvider;
 		$this->users = $users;
+		$this->userThreads = $userThreads;
+
+		$this->userThreads->_injectConversationsFacade($this);
 
 		$this->daoConversations = $em->getRepository('Carrooi\Conversations\Model\Entities\IConversation');
 		$this->daoUserThreads = $em->getRepository(ConversationUserThread::getClassName());
@@ -123,136 +130,6 @@ class ConversationsFacade extends Object
 
 	/**
 	 * @param \Carrooi\Conversations\Model\Entities\IConversation $conversation
-	 * @param \Carrooi\Conversations\Model\Entities\IUser $user
-	 * @return \Carrooi\Conversations\Model\Entities\ConversationUserThread
-	 */
-	public function isUserInConversation(IConversation $conversation, IUser $user)
-	{
-		return $this->findUserThreadByConversationAndUser($conversation, $user) !== null;
-	}
-
-
-	/**
-	 * @param \Carrooi\Conversations\Model\Entities\IConversation $conversation
-	 * @param \Carrooi\Conversations\Model\Entities\IUser $user
-	 * @return \Carrooi\Conversations\Model\Entities\ConversationUserThread
-	 */
-	public function addUserToConversation(IConversation $conversation, IUser $user)
-	{
-		$oldUserThread = $this->findUserThreadByConversationAndUser($conversation, $user, false);
-		if ($oldUserThread !== null) {
-			if ($oldUserThread->isAllowed()) {
-				throw new InvalidStateException('User '. $user->getId(). ' is already in conversation '. $conversation->getId(). '.');
-			} else {
-				$oldUserThread->allow();
-				$this->em->persist($oldUserThread)->flush();
-
-				return $oldUserThread;
-			}
-		}
-
-		$userThread = new ConversationUserThread;
-		$userThread->setConversation($conversation);
-		$userThread->setUser($user);
-
-		$this->em->persist($userThread);
-
-		$oldItems = $this->findAllOriginalItems($conversation);
-
-		foreach ($oldItems as $item) {
-			$item = clone $item;
-			$item->setConversationUserThread($userThread);
-
-			$this->em->persist($item);
-		}
-
-		$this->em->flush();
-
-		return $userThread;
-	}
-
-
-	/**
-	 * @param \Carrooi\Conversations\Model\Entities\IConversation $conversation
-	 * @param \Carrooi\Conversations\Model\Entities\IUser $user
-	 * @return $this
-	 */
-	public function unlinkUserFromConversation(IConversation $conversation, IUser $user)
-	{
-		if ($conversation->getCreator()->getId() === $user->getId()) {
-			throw new InvalidStateException('Can not unlink creator from conversation '. $conversation->getId(). '.');
-		}
-
-		if (!$this->isUserInConversation($conversation, $user)) {
-			throw new InvalidStateException('User '. $user->getId(). ' is not in conversation '. $conversation->getId(). '.');
-		}
-
-		$userThread = $this->findUserThreadByConversationAndUser($conversation, $user);
-		$userThread->deny();
-
-		$this->em->persist($userThread)->flush();
-
-		return $this;
-	}
-
-
-	/**
-	 * @param \Carrooi\Conversations\Model\Entities\IConversation $conversation
-	 * @param \Carrooi\Conversations\Model\Entities\IUser $user
-	 * @return $this
-	 */
-	public function removeUserFromConversation(IConversation $conversation, IUser $user)
-	{
-		if ($conversation->getCreator()->getId() === $user->getId()) {
-			throw new InvalidStateException('Can not remove creator from conversation '. $conversation->getId(). '.');
-		}
-
-		if (!$this->isUserInConversation($conversation, $user)) {
-			throw new InvalidStateException('User '. $user->getId(). ' is not in conversation '. $conversation->getId(). '.');
-		}
-
-		$userThread = $this->findUserThreadByConversationAndUser($conversation, $user);
-		$this->em->remove($userThread)->flush();
-
-		return $this;
-	}
-
-
-	/**
-	 * @param \Carrooi\Conversations\Model\Entities\IConversation $conversation
-	 * @param \Carrooi\Conversations\Model\Entities\IUser $user
-	 * @param bool $onlyAllowed
-	 * @return \Carrooi\Conversations\Model\Entities\ConversationUserThread
-	 */
-	public function findUserThreadByConversationAndUser(IConversation $conversation, IUser $user, $onlyAllowed = true)
-	{
-		$criteria = [
-			'conversation' => $conversation,
-			'user' => $user,
-		];
-
-		if ($onlyAllowed) {
-			$criteria['allowed'] = true;
-		}
-
-		return $this->daoUserThreads->findOneBy($criteria);
-	}
-
-
-	/**
-	 * @param \Carrooi\Conversations\Model\Entities\IConversation $conversation
-	 * @return \Carrooi\Conversations\Model\Entities\ConversationUserThread
-	 */
-	public function findOriginalUserThread(IConversation $conversation)
-	{
-		return $this->daoUserThreads->findOneBy([
-			'conversation' => $conversation,
-		]);
-	}
-
-
-	/**
-	 * @param \Carrooi\Conversations\Model\Entities\IConversation $conversation
 	 * @param \Carrooi\Conversations\Model\Entities\IUser $sender
 	 * @param \Carrooi\Conversations\Model\Entities\IConversationAttachment $attachment
 	 * @return \Carrooi\Conversations\Model\Entities\IConversationItem
@@ -260,7 +137,7 @@ class ConversationsFacade extends Object
 	 */
 	public function addItemToConversation(IConversation $conversation, IUser $sender, IConversationAttachment $attachment, IUser $user = null)
 	{
-		if ($user !== null && !$this->isUserInConversation($conversation, $user)) {
+		if ($user !== null && !$this->userThreads->isUserInConversation($conversation, $user)) {
 			throw new InvalidStateException('User '. $user->getId(). ' is not in conversation '. $conversation->getId(). '.');
 		}
 
@@ -271,9 +148,9 @@ class ConversationsFacade extends Object
 		}
 
 		if ($user) {
-			$userThread = $this->findUserThreadByConversationAndUser($conversation, $user);
+			$userThread = $this->userThreads->findUserThreadByConversationAndUser($conversation, $user);
 		} else {
-			$userThread = $this->findOriginalUserThread($conversation);
+			$userThread = $this->userThreads->findOriginalUserThread($conversation);
 		}
 
 		$item = $this->entitiesProvider->createConversationItemEntity();

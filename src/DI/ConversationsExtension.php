@@ -77,6 +77,9 @@ class ConversationsExtension extends CompilerExtension implements IEntityProvide
 		$builder->addDefinition($this->prefix('facade.users'))
 			->setClass('Carrooi\Conversations\Model\Facades\UsersFacade');
 
+		$builder->addDefinition($this->prefix('facade.userThreads'))
+			->setClass('Carrooi\Conversations\Model\Facades\ConversationUserThreadsFacade');
+
 		$builder->addDefinition($this->prefix('facade.conversations'))
 			->setClass('Carrooi\Conversations\Model\Facades\ConversationsFacade');
 

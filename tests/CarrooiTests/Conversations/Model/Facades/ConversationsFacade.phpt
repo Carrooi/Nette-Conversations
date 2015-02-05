@@ -36,6 +36,9 @@ class ConversationsFacadeTest extends TestCase
 	/** @var \Carrooi\Conversations\Model\Facades\UsersFacade */
 	private $users;
 
+	/** @var \Carrooi\Conversations\Model\Facades\ConversationUserThreadsFacade */
+	private $userThreads;
+
 	/** @var \CarrooiTests\ConversationsApp\Model\Facades\Users */
 	private $appUsers;
 
@@ -51,6 +54,7 @@ class ConversationsFacadeTest extends TestCase
 		$this->conversations = $container->getByType('Carrooi\Conversations\Model\Facades\ConversationsFacade');
 		$this->messages = $container->getByType('Carrooi\Conversations\Model\Facades\ConversationMessagesFacade');
 		$this->users = $container->getByType('Carrooi\Conversations\Model\Facades\UsersFacade');
+		$this->userThreads = $container->getByType('Carrooi\Conversations\Model\Facades\ConversationUserThreadsFacade');
 		$this->appUsers = $container->getByType('CarrooiTests\ConversationsApp\Model\Facades\Users');
 
 		return $container;
@@ -78,240 +82,6 @@ class ConversationsFacadeTest extends TestCase
 	}
 
 
-	public function testAddUserToConversation()
-	{
-		$this->createContainer();
-
-		$creator = $this->appUsers->create();
-		$conversation = $this->conversations->createConversation($creator);
-
-		$user = $this->appUsers->create();
-		$userThread = $this->conversations->addUserToConversation($conversation, $user);
-
-		Assert::notSame(null, $userThread->getId());
-		Assert::same($user->getId(), $userThread->getUser()->getId());
-		Assert::same($conversation->getId(), $userThread->getConversation()->getId());
-	}
-
-
-	public function testAddUserToConversation_alreadyExists()
-	{
-		$this->createContainer();
-
-		$creator = $this->appUsers->create();
-		$conversation = $this->conversations->createConversation($creator);
-
-		Assert::exception(function() use ($conversation, $creator) {
-			$this->conversations->addUserToConversation($conversation, $creator);
-		}, 'Carrooi\Conversations\InvalidStateException', 'User '. $creator->getId(). ' is already in conversation '. $conversation->getId(). '.');
-	}
-
-
-	public function testAddUserToConversation_denied()
-	{
-		$this->createContainer();
-
-		$creator = $this->appUsers->create();
-		$conversation = $this->conversations->createConversation($creator);
-
-		$user = $this->appUsers->create();
-		$this->conversations->addUserToConversation($conversation, $user);
-
-		$this->conversations->unlinkUserFromConversation($conversation, $user);
-
-		Assert::false($this->conversations->isUserInConversation($conversation, $user));
-
-		$this->conversations->addUserToConversation($conversation, $user);
-
-		Assert::true($this->conversations->isUserInConversation($conversation, $user));
-	}
-
-
-	public function testAddUserToConversation_cloneOldItems()
-	{
-		$this->createContainer();
-
-		$creator = $this->appUsers->create();
-		$conversation = $this->conversations->createConversation($creator);
-
-		$this->conversations->sendItem($conversation, $creator, $this->messages->create('lorem'));
-		$this->conversations->sendItem($conversation, $creator, $this->messages->create('lorem'));
-		$this->conversations->sendItem($conversation, $creator, $this->messages->create('lorem'));
-
-		foreach ($this->conversations->findAllItemsByConversationAndUser($conversation, $creator) as $item) {
-			$this->conversations->removeItem($item);
-		}
-
-		Assert::count(0, $this->conversations->findAllItemsByConversationAndUser($conversation, $creator));
-
-		$user = $this->appUsers->create();
-		$this->conversations->addUserToConversation($conversation, $user);
-
-		Assert::count(3, $this->conversations->findAllItemsByConversationAndUser($conversation, $user));
-	}
-
-
-	public function testFindUserThreadByConversationAndUser_notExists()
-	{
-		$this->createContainer();
-
-		$creator = $this->appUsers->create();
-		$conversation = $this->conversations->createConversation($creator);
-
-		Assert::null($this->conversations->findUserThreadByConversationAndUser($conversation, $this->appUsers->create()));
-	}
-
-
-	public function testFindUserThreadByConversationAndUser()
-	{
-		$this->createContainer();
-
-		$creator = $this->appUsers->create();
-		$conversation = $this->conversations->createConversation($creator);
-
-		Assert::notSame(null, $this->conversations->findUserThreadByConversationAndUser($conversation, $creator));
-
-		$user = $this->appUsers->create();
-		$this->conversations->addUserToConversation($conversation, $user);
-
-		Assert::notSame(null, $this->conversations->findUserThreadByConversationAndUser($conversation, $user));
-	}
-
-
-	public function testFindOriginalUserThread()
-	{
-		$this->createContainer();
-
-		$creator = $this->appUsers->create();
-		$conversation = $this->conversations->createConversation($creator);
-
-		$originalThread = $this->conversations->findOriginalUserThread($conversation);
-
-		Assert::notSame(null, $originalThread);
-		Assert::null($originalThread->getUser());
-	}
-
-
-	public function testIsUserInConversation_false()
-	{
-		$this->createContainer();
-
-		$creator = $this->appUsers->create();
-		$conversation = $this->conversations->createConversation($creator);
-
-		Assert::false($this->conversations->isUserInConversation($conversation, $this->appUsers->create()));
-	}
-
-
-	public function testIsUserInConversation_true()
-	{
-		$this->createContainer();
-
-		$creator = $this->appUsers->create();
-		$conversation = $this->conversations->createConversation($creator);
-
-		Assert::true($this->conversations->isUserInConversation($conversation, $creator));
-
-		$user = $this->appUsers->create();
-		$this->conversations->addUserToConversation($conversation, $user);
-
-		Assert::true($this->conversations->isUserInConversation($conversation, $user));
-	}
-
-
-	public function testRemoveUserFromConversation_creator()
-	{
-		$this->createContainer();
-
-		$creator = $this->appUsers->create();
-		$conversation = $this->conversations->createConversation($creator);
-
-		Assert::exception(function() use ($conversation, $creator) {
-			$this->conversations->removeUserFromConversation($conversation, $creator);
-		}, 'Carrooi\Conversations\InvalidStateException', 'Can not remove creator from conversation '. $conversation->getId(). '.');
-	}
-
-
-	public function testRemoveUserFromConversation_notInConversation()
-	{
-		$this->createContainer();
-
-		$creator = $this->appUsers->create();
-		$conversation = $this->conversations->createConversation($creator);
-
-		$user = $this->appUsers->create();
-
-		Assert::exception(function() use ($conversation, $user) {
-			$this->conversations->removeUserFromConversation($conversation, $user);
-		}, 'Carrooi\Conversations\InvalidStateException', 'User '. $user->getId(). ' is not in conversation '. $conversation->getId().'.');
-	}
-
-
-	public function testRemoveUserFromConversation()
-	{
-		$this->createContainer();
-
-		$creator = $this->appUsers->create();
-		$conversation = $this->conversations->createConversation($creator);
-
-		$user = $this->appUsers->create();
-		$this->conversations->addUserToConversation($conversation, $user);
-
-		$this->conversations->removeUserFromConversation($conversation, $user);
-
-		Assert::false($this->conversations->isUserInConversation($conversation, $user));
-	}
-
-
-	public function testUnlinkUserFromConversation_creator()
-	{
-		$this->createContainer();
-
-		$creator = $this->appUsers->create();
-		$conversation = $this->conversations->createConversation($creator);
-
-		Assert::exception(function() use ($conversation, $creator) {
-			$this->conversations->unlinkUserFromConversation($conversation, $creator);
-		}, 'Carrooi\Conversations\InvalidStateException', 'Can not unlink creator from conversation '. $conversation->getId(). '.');
-	}
-
-
-	public function testUnlinkUserFromConversation_notInConversation()
-	{
-		$this->createContainer();
-
-		$creator = $this->appUsers->create();
-		$conversation = $this->conversations->createConversation($creator);
-
-		$user = $this->appUsers->create();
-
-		Assert::exception(function() use ($conversation, $user) {
-			$this->conversations->unlinkUserFromConversation($conversation, $user);
-		}, 'Carrooi\Conversations\InvalidStateException', 'User '. $user->getId(). ' is not in conversation '. $conversation->getId().'.');
-	}
-
-
-	public function testUnlinkUserFromConversation()
-	{
-		$this->createContainer();
-
-		$creator = $this->appUsers->create();
-		$conversation = $this->conversations->createConversation($creator);
-
-		$user = $this->appUsers->create();
-		$this->conversations->addUserToConversation($conversation, $user);
-
-		$this->conversations->unlinkUserFromConversation($conversation, $user);
-
-		Assert::false($this->conversations->isUserInConversation($conversation, $user));
-
-		$userThread = $this->conversations->findUserThreadByConversationAndUser($conversation, $user, false);
-
-		Assert::notSame(null, $userThread);
-		Assert::false($userThread->isAllowed());
-	}
-
-
 	public function testFindAllByUser()
 	{
 		$this->createContainer();
@@ -325,12 +95,12 @@ class ConversationsFacadeTest extends TestCase
 		$user = $this->appUsers->create();
 
 		$conversation = $this->conversations->createConversation($this->appUsers->create());
-		$this->conversations->addUserToConversation($conversation, $user);
+		$this->userThreads->addUserToConversation($conversation, $user);
 
 		$conversation = $this->conversations->createConversation($this->appUsers->create());
-		$this->conversations->addUserToConversation($conversation, $user);
+		$this->userThreads->addUserToConversation($conversation, $user);
 
-		$this->conversations->unlinkUserFromConversation($conversation, $user);
+		$this->userThreads->unlinkUserFromConversation($conversation, $user);
 
 		Assert::count(3, $this->conversations->findAllByUser($creator));
 		Assert::count(1, $this->conversations->findAllByUser($user));
@@ -349,8 +119,8 @@ class ConversationsFacadeTest extends TestCase
 		$this->conversations->createConversation($user);
 
 		$conversation = $this->conversations->createConversation($this->appUsers->create());
-		$this->conversations->addUserToConversation($conversation, $user);
-		$this->conversations->unlinkUserFromConversation($conversation, $user);
+		$this->userThreads->addUserToConversation($conversation, $user);
+		$this->userThreads->unlinkUserFromConversation($conversation, $user);
 
 		Assert::same(4, $this->conversations->countByUser($user));
 	}
@@ -392,7 +162,7 @@ class ConversationsFacadeTest extends TestCase
 		$creator = $this->appUsers->create();
 		$conversation = $this->conversations->createConversation($creator);
 
-		$userThread = $this->conversations->findUserThreadByConversationAndUser($conversation, $creator);
+		$userThread = $this->userThreads->findUserThreadByConversationAndUser($conversation, $creator);
 
 		$message = $this->messages->create('lorem');
 
@@ -410,7 +180,7 @@ class ConversationsFacadeTest extends TestCase
 		Assert::true($item->isRead());
 
 		$user = $this->appUsers->create();
-		$this->conversations->addUserToConversation($conversation, $user);
+		$this->userThreads->addUserToConversation($conversation, $user);
 		$item = $this->conversations->addItemToConversation($conversation, $creator, $message, $user);
 
 		Assert::false($item->isRead());
@@ -430,7 +200,7 @@ class ConversationsFacadeTest extends TestCase
 		$this->conversations->addItemToConversation($conversation, $creator, $this->messages->create('lorem'), $creator);
 
 		$user = $this->appUsers->create();
-		$this->conversations->addUserToConversation($conversation, $user);
+		$this->userThreads->addUserToConversation($conversation, $user);
 		$this->conversations->addItemToConversation($conversation, $creator, $this->messages->create('lorem'), $user);
 
 		$items = $this->conversations->findAllItemsByConversationAndUser($conversation, $creator);
@@ -446,10 +216,10 @@ class ConversationsFacadeTest extends TestCase
 		$creator = $this->appUsers->create();
 		$conversation = $this->conversations->createConversation($creator);
 
-		$this->conversations->addUserToConversation($conversation, $this->appUsers->create());
-		$this->conversations->addUserToConversation($conversation, $this->appUsers->create());
-		$this->conversations->addUserToConversation($conversation, $this->appUsers->create());
-		$this->conversations->addUserToConversation($conversation, $this->appUsers->create());
+		$this->userThreads->addUserToConversation($conversation, $this->appUsers->create());
+		$this->userThreads->addUserToConversation($conversation, $this->appUsers->create());
+		$this->userThreads->addUserToConversation($conversation, $this->appUsers->create());
+		$this->userThreads->addUserToConversation($conversation, $this->appUsers->create());
 
 		$message = $this->messages->create('lorem');
 
@@ -485,7 +255,7 @@ class ConversationsFacadeTest extends TestCase
 		$user = $this->appUsers->create();
 
 		$conversation1 = $this->conversations->createConversation($creator);
-		$this->conversations->addUserToConversation($conversation1, $user);
+		$this->userThreads->addUserToConversation($conversation1, $user);
 
 		$this->conversations->sendItem($conversation1, $creator, $this->messages->create('lorem'));
 		$this->conversations->sendItem($conversation1, $creator, $this->messages->create('lorem'));
@@ -493,14 +263,14 @@ class ConversationsFacadeTest extends TestCase
 		$this->conversations->sendItem($conversation1, $user, $this->messages->create('lorem'));
 
 		$conversation2 = $this->conversations->createConversation($creator);
-		$this->conversations->addUserToConversation($conversation2, $user);
+		$this->userThreads->addUserToConversation($conversation2, $user);
 
 		$this->conversations->sendItem($conversation2, $creator, $this->messages->create('lorem'));
 
 		$this->conversations->sendItem($conversation2, $user, $this->messages->create('lorem'));
 
 		$conversation3 = $this->conversations->createConversation($creator);
-		$this->conversations->addUserToConversation($conversation3, $user);
+		$this->userThreads->addUserToConversation($conversation3, $user);
 
 		$this->conversations->sendItem($conversation3, $user, $this->messages->create('lorem'));
 
@@ -537,7 +307,7 @@ class ConversationsFacadeTest extends TestCase
 		$user = $this->appUsers->create();
 
 		$conversation = $this->conversations->createConversation($creator);
-		$this->conversations->addUserToConversation($conversation, $user);
+		$this->userThreads->addUserToConversation($conversation, $user);
 
 		$this->conversations->sendItem($conversation, $creator, $this->messages->create('lorem'));
 		$this->conversations->sendItem($conversation, $creator, $this->messages->create('lorem'));
@@ -545,14 +315,14 @@ class ConversationsFacadeTest extends TestCase
 		$this->conversations->sendItem($conversation, $user, $this->messages->create('lorem'));
 
 		$conversation = $this->conversations->createConversation($creator);
-		$this->conversations->addUserToConversation($conversation, $user);
+		$this->userThreads->addUserToConversation($conversation, $user);
 
 		$this->conversations->sendItem($conversation, $creator, $this->messages->create('lorem'));
 
 		$this->conversations->sendItem($conversation, $user, $this->messages->create('lorem'));
 
 		$conversation = $this->conversations->createConversation($creator);
-		$this->conversations->addUserToConversation($conversation, $user);
+		$this->userThreads->addUserToConversation($conversation, $user);
 
 		$this->conversations->sendItem($conversation, $user, $this->messages->create('lorem'));
 
@@ -655,7 +425,7 @@ class ConversationsFacadeTest extends TestCase
 		$conversation = $this->conversations->createConversation($creator);
 
 		$user = $this->appUsers->create();
-		$this->conversations->addUserToConversation($conversation, $user);
+		$this->userThreads->addUserToConversation($conversation, $user);
 
 		$this->conversations->sendItem($conversation, $user, $this->messages->create('lorem'));
 		$this->conversations->sendItem($conversation, $user, $this->messages->create('lorem'));
@@ -688,7 +458,7 @@ class ConversationsFacadeTest extends TestCase
 		$conversation = $this->conversations->createConversation($creator);
 
 		$user = $this->appUsers->create();
-		$this->conversations->addUserToConversation($conversation, $user);
+		$this->userThreads->addUserToConversation($conversation, $user);
 
 		$this->conversations->sendItem($conversation, $user, $this->messages->create('lorem'));
 		$this->conversations->sendItem($conversation, $user, $this->messages->create('lorem'));

@@ -31,6 +31,9 @@ class UsersFacadeTest extends TestCase
 	/** @var \Carrooi\Conversations\Model\Facades\UsersFacade */
 	private $users;
 
+	/** @var \Carrooi\Conversations\Model\Facades\ConversationUserThreadsFacade */
+	private $userThreads;
+
 	/** @var \CarrooiTests\ConversationsApp\Model\Facades\Users */
 	private $appUsers;
 
@@ -42,6 +45,7 @@ class UsersFacadeTest extends TestCase
 		$this->conversations = $container->getByType('Carrooi\Conversations\Model\Facades\ConversationsFacade');
 		$this->messages = $container->getByType('Carrooi\Conversations\Model\Facades\ConversationMessagesFacade');
 		$this->users = $container->getByType('Carrooi\Conversations\Model\Facades\UsersFacade');
+		$this->userThreads = $container->getByType('Carrooi\Conversations\Model\Facades\ConversationUserThreadsFacade');
 		$this->appUsers = $container->getByType('CarrooiTests\ConversationsApp\Model\Facades\Users');
 	}
 
@@ -60,14 +64,14 @@ class UsersFacadeTest extends TestCase
 
 		$conversation = $this->conversations->createConversation($this->appUsers->create());
 
-		$this->conversations->addUserToConversation($conversation, $this->appUsers->create());
-		$this->conversations->addUserToConversation($conversation, $this->appUsers->create());
-		$this->conversations->addUserToConversation($conversation, $this->appUsers->create());
-		$this->conversations->addUserToConversation($conversation, $this->appUsers->create());
+		$this->userThreads->addUserToConversation($conversation, $this->appUsers->create());
+		$this->userThreads->addUserToConversation($conversation, $this->appUsers->create());
+		$this->userThreads->addUserToConversation($conversation, $this->appUsers->create());
+		$this->userThreads->addUserToConversation($conversation, $this->appUsers->create());
 
-		$this->conversations->addUserToConversation($this->conversations->createConversation($this->appUsers->create()), $this->appUsers->create());
-		$this->conversations->addUserToConversation($this->conversations->createConversation($this->appUsers->create()), $this->appUsers->create());
-		$this->conversations->addUserToConversation($this->conversations->createConversation($this->appUsers->create()), $this->appUsers->create());
+		$this->userThreads->addUserToConversation($this->conversations->createConversation($this->appUsers->create()), $this->appUsers->create());
+		$this->userThreads->addUserToConversation($this->conversations->createConversation($this->appUsers->create()), $this->appUsers->create());
+		$this->userThreads->addUserToConversation($this->conversations->createConversation($this->appUsers->create()), $this->appUsers->create());
 
 		Assert::count(5, $this->users->findAllUsersInConversation($conversation));
 	}
@@ -79,14 +83,14 @@ class UsersFacadeTest extends TestCase
 
 		$conversation = $this->conversations->createConversation($this->appUsers->create());
 
-		$this->conversations->addUserToConversation($conversation, $this->appUsers->create());
-		$this->conversations->addUserToConversation($conversation, $this->appUsers->create());
-		$this->conversations->addUserToConversation($conversation, $this->appUsers->create());
-		$this->conversations->addUserToConversation($conversation, $this->appUsers->create());
+		$this->userThreads->addUserToConversation($conversation, $this->appUsers->create());
+		$this->userThreads->addUserToConversation($conversation, $this->appUsers->create());
+		$this->userThreads->addUserToConversation($conversation, $this->appUsers->create());
+		$this->userThreads->addUserToConversation($conversation, $this->appUsers->create());
 
-		$this->conversations->addUserToConversation($this->conversations->createConversation($this->appUsers->create()), $this->appUsers->create());
-		$this->conversations->addUserToConversation($this->conversations->createConversation($this->appUsers->create()), $this->appUsers->create());
-		$this->conversations->addUserToConversation($this->conversations->createConversation($this->appUsers->create()), $this->appUsers->create());
+		$this->userThreads->addUserToConversation($this->conversations->createConversation($this->appUsers->create()), $this->appUsers->create());
+		$this->userThreads->addUserToConversation($this->conversations->createConversation($this->appUsers->create()), $this->appUsers->create());
+		$this->userThreads->addUserToConversation($this->conversations->createConversation($this->appUsers->create()), $this->appUsers->create());
 
 		Assert::same(5, $this->users->countUsersInConversation($conversation));
 	}
