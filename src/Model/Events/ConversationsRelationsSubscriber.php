@@ -63,10 +63,6 @@ class ConversationsRelationsSubscriber extends Object implements Subscriber
 		$class = $metadata->getName();
 		$implements = class_implements($class);
 
-		if ($class === 'Carrooi\Conversations\Model\Entities\BaseConversationItem') {
-
-		}
-
 		if (
 			(in_array('Carrooi\Conversations\Model\Entities\IConversation', $implements) && $class !== $this->entitiesProvider->getConversationClass()) ||
 			(in_array('Carrooi\Conversations\Model\Entities\IConversationItem', $implements) && $class !== $this->entitiesProvider->getConversationItemClass())
