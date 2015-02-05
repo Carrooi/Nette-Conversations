@@ -26,6 +26,9 @@ class ConversationsFacadeAdvancedTest extends TestCase
 	/** @var \Carrooi\Conversations\Model\Facades\ConversationsFacade */
 	private $conversations;
 
+	/** @var \Carrooi\Conversations\Model\Facades\ConversationMessagesFacade */
+	private $messages;
+
 	/** @var \CarrooiTests\ConversationsApp\Model\Facades\Users */
 	private $users;
 
@@ -44,6 +47,7 @@ class ConversationsFacadeAdvancedTest extends TestCase
 		$container = parent::createContainer($customConfig);
 
 		$this->conversations = $container->getByType('Carrooi\Conversations\Model\Facades\ConversationsFacade');
+		$this->messages = $container->getByType('Carrooi\Conversations\Model\Facades\ConversationMessagesFacade');
 		$this->users = $container->getByType('CarrooiTests\ConversationsApp\Model\Facades\Users');
 		$this->books = $container->getByType('CarrooiTests\ConversationsApp\Model\Facades\Books');
 
@@ -67,7 +71,7 @@ class ConversationsFacadeAdvancedTest extends TestCase
 		$conversation = $this->conversations->createConversation($creator);
 
 		$this->conversations->sendItem($conversation, $creator, $this->books->create());
-		$this->conversations->sendItem($conversation, $creator, $this->conversations->createMessage('lorem'));
+		$this->conversations->sendItem($conversation, $creator, $this->messages->create('lorem'));
 		$this->conversations->sendItem($conversation, $creator, $this->books->create());
 
 		$items = $this->conversations->findAllItemsByConversationAndUser($conversation, $creator)->toArray();

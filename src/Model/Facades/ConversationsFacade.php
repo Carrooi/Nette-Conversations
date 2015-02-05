@@ -88,21 +88,6 @@ class ConversationsFacade extends Object
 
 
 	/**
-	 * @param string $text
-	 * @return \Carrooi\Conversations\Model\Entities\ConversationMessage
-	 */
-	public function createMessage($text)
-	{
-		$message = new ConversationMessage;
-		$message->setText($text);
-
-		$this->em->persist($message)->flush();
-
-		return $message;
-	}
-
-
-	/**
 	 * @param \Carrooi\Conversations\Model\Entities\IUser $user
 	 * @return \Kdyby\Doctrine\ResultSet|\Carrooi\Conversations\Model\Entities\IConversation[]
 	 */

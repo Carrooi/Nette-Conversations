@@ -31,6 +31,9 @@ class ConversationsFacadeTest extends TestCase
 	/** @var \Carrooi\Conversations\Model\Facades\ConversationsFacade */
 	private $conversations;
 
+	/** @var \Carrooi\Conversations\Model\Facades\ConversationMessagesFacade */
+	private $messages;
+
 	/** @var \CarrooiTests\ConversationsApp\Model\Facades\Users */
 	private $users;
 
@@ -44,6 +47,7 @@ class ConversationsFacadeTest extends TestCase
 		$container = parent::createContainer($customConfig);
 
 		$this->conversations = $container->getByType('Carrooi\Conversations\Model\Facades\ConversationsFacade');
+		$this->messages = $container->getByType('Carrooi\Conversations\Model\Facades\ConversationMessagesFacade');
 		$this->users = $container->getByType('CarrooiTests\ConversationsApp\Model\Facades\Users');
 
 		return $container;
@@ -127,9 +131,9 @@ class ConversationsFacadeTest extends TestCase
 		$creator = $this->users->create();
 		$conversation = $this->conversations->createConversation($creator);
 
-		$this->conversations->sendItem($conversation, $creator, $this->conversations->createMessage('lorem'));
-		$this->conversations->sendItem($conversation, $creator, $this->conversations->createMessage('lorem'));
-		$this->conversations->sendItem($conversation, $creator, $this->conversations->createMessage('lorem'));
+		$this->conversations->sendItem($conversation, $creator, $this->messages->create('lorem'));
+		$this->conversations->sendItem($conversation, $creator, $this->messages->create('lorem'));
+		$this->conversations->sendItem($conversation, $creator, $this->messages->create('lorem'));
 
 		foreach ($this->conversations->findAllItemsByConversationAndUser($conversation, $creator) as $item) {
 			$this->conversations->removeItem($item);
@@ -387,24 +391,13 @@ class ConversationsFacadeTest extends TestCase
 	}
 
 
-	public function testCreateMessage()
-	{
-		$this->createContainer();
-
-		$message = $this->conversations->createMessage('lorem');
-
-		Assert::notSame(null, $message->getId());
-		Assert::same('lorem', $message->getText());
-	}
-
-
 	public function testAddItemToConversation_notInConversation()
 	{
 		$this->createContainer();
 
 		$creator = $this->users->create();
 		$conversation = $this->conversations->createConversation($creator);
-		$message = $this->conversations->createMessage('lorem');
+		$message = $this->messages->create('lorem');
 
 		$user = $this->users->create();
 
@@ -436,7 +429,7 @@ class ConversationsFacadeTest extends TestCase
 
 		$userThread = $this->conversations->findUserThreadByConversationAndUser($conversation, $creator);
 
-		$message = $this->conversations->createMessage('lorem');
+		$message = $this->messages->create('lorem');
 
 		$item = $this->conversations->addItemToConversation($conversation, $creator, $message, $creator);
 
@@ -466,14 +459,14 @@ class ConversationsFacadeTest extends TestCase
 		$creator = $this->users->create();
 		$conversation = $this->conversations->createConversation($creator);
 
-		$this->conversations->addItemToConversation($conversation, $creator, $this->conversations->createMessage('lorem'), $creator);
-		$this->conversations->addItemToConversation($conversation, $creator, $this->conversations->createMessage('lorem'), $creator);
-		$this->conversations->addItemToConversation($conversation, $creator, $this->conversations->createMessage('lorem'), $creator);
-		$this->conversations->addItemToConversation($conversation, $creator, $this->conversations->createMessage('lorem'), $creator);
+		$this->conversations->addItemToConversation($conversation, $creator, $this->messages->create('lorem'), $creator);
+		$this->conversations->addItemToConversation($conversation, $creator, $this->messages->create('lorem'), $creator);
+		$this->conversations->addItemToConversation($conversation, $creator, $this->messages->create('lorem'), $creator);
+		$this->conversations->addItemToConversation($conversation, $creator, $this->messages->create('lorem'), $creator);
 
 		$user = $this->users->create();
 		$this->conversations->addUserToConversation($conversation, $user);
-		$this->conversations->addItemToConversation($conversation, $creator, $this->conversations->createMessage('lorem'), $user);
+		$this->conversations->addItemToConversation($conversation, $creator, $this->messages->create('lorem'), $user);
 
 		$items = $this->conversations->findAllItemsByConversationAndUser($conversation, $creator);
 
@@ -493,7 +486,7 @@ class ConversationsFacadeTest extends TestCase
 		$this->conversations->addUserToConversation($conversation, $this->users->create());
 		$this->conversations->addUserToConversation($conversation, $this->users->create());
 
-		$message = $this->conversations->createMessage('lorem');
+		$message = $this->messages->create('lorem');
 
 		$this->conversations->sendItem($conversation, $creator, $message);
 
@@ -529,22 +522,22 @@ class ConversationsFacadeTest extends TestCase
 		$conversation1 = $this->conversations->createConversation($creator);
 		$this->conversations->addUserToConversation($conversation1, $user);
 
-		$this->conversations->sendItem($conversation1, $creator, $this->conversations->createMessage('lorem'));
-		$this->conversations->sendItem($conversation1, $creator, $this->conversations->createMessage('lorem'));
+		$this->conversations->sendItem($conversation1, $creator, $this->messages->create('lorem'));
+		$this->conversations->sendItem($conversation1, $creator, $this->messages->create('lorem'));
 
-		$this->conversations->sendItem($conversation1, $user, $this->conversations->createMessage('lorem'));
+		$this->conversations->sendItem($conversation1, $user, $this->messages->create('lorem'));
 
 		$conversation2 = $this->conversations->createConversation($creator);
 		$this->conversations->addUserToConversation($conversation2, $user);
 
-		$this->conversations->sendItem($conversation2, $creator, $this->conversations->createMessage('lorem'));
+		$this->conversations->sendItem($conversation2, $creator, $this->messages->create('lorem'));
 
-		$this->conversations->sendItem($conversation2, $user, $this->conversations->createMessage('lorem'));
+		$this->conversations->sendItem($conversation2, $user, $this->messages->create('lorem'));
 
 		$conversation3 = $this->conversations->createConversation($creator);
 		$this->conversations->addUserToConversation($conversation3, $user);
 
-		$this->conversations->sendItem($conversation3, $user, $this->conversations->createMessage('lorem'));
+		$this->conversations->sendItem($conversation3, $user, $this->messages->create('lorem'));
 
 		$conversations = $this->conversations->findAllUnreadByUser($user)->toArray();
 		/** @var \Carrooi\Conversations\Model\Entities\IConversation[] $conversations */
@@ -581,22 +574,22 @@ class ConversationsFacadeTest extends TestCase
 		$conversation = $this->conversations->createConversation($creator);
 		$this->conversations->addUserToConversation($conversation, $user);
 
-		$this->conversations->sendItem($conversation, $creator, $this->conversations->createMessage('lorem'));
-		$this->conversations->sendItem($conversation, $creator, $this->conversations->createMessage('lorem'));
+		$this->conversations->sendItem($conversation, $creator, $this->messages->create('lorem'));
+		$this->conversations->sendItem($conversation, $creator, $this->messages->create('lorem'));
 
-		$this->conversations->sendItem($conversation, $user, $this->conversations->createMessage('lorem'));
-
-		$conversation = $this->conversations->createConversation($creator);
-		$this->conversations->addUserToConversation($conversation, $user);
-
-		$this->conversations->sendItem($conversation, $creator, $this->conversations->createMessage('lorem'));
-
-		$this->conversations->sendItem($conversation, $user, $this->conversations->createMessage('lorem'));
+		$this->conversations->sendItem($conversation, $user, $this->messages->create('lorem'));
 
 		$conversation = $this->conversations->createConversation($creator);
 		$this->conversations->addUserToConversation($conversation, $user);
 
-		$this->conversations->sendItem($conversation, $user, $this->conversations->createMessage('lorem'));
+		$this->conversations->sendItem($conversation, $creator, $this->messages->create('lorem'));
+
+		$this->conversations->sendItem($conversation, $user, $this->messages->create('lorem'));
+
+		$conversation = $this->conversations->createConversation($creator);
+		$this->conversations->addUserToConversation($conversation, $user);
+
+		$this->conversations->sendItem($conversation, $user, $this->messages->create('lorem'));
 
 		$count = $this->conversations->countUnreadByUser($user);
 
@@ -615,7 +608,7 @@ class ConversationsFacadeTest extends TestCase
 		$creator = $this->users->create();
 		$conversation = $this->conversations->createConversation($creator);
 
-		$this->conversations->sendItem($conversation, $creator, $this->conversations->createMessage('lorem'));
+		$this->conversations->sendItem($conversation, $creator, $this->messages->create('lorem'));
 
 		$item = $this->conversations->findAllItemsByConversationAndUser($conversation, $creator)->toArray()[0];
 		/** @var \Carrooi\Conversations\Model\Entities\IConversationItem $item */
@@ -632,11 +625,11 @@ class ConversationsFacadeTest extends TestCase
 		$creator = $this->users->create();
 		$conversation1 = $this->conversations->createConversation($creator);
 
-		$item1 = $this->conversations->addItemToConversation($conversation1, $creator, $this->conversations->createMessage('lorem'), $creator);
+		$item1 = $this->conversations->addItemToConversation($conversation1, $creator, $this->messages->create('lorem'), $creator);
 
 		$conversation2 = $this->conversations->createConversation($creator);
 
-		$item2 = $this->conversations->addItemToConversation($conversation2, $creator, $this->conversations->createMessage('lorem'), $creator);
+		$item2 = $this->conversations->addItemToConversation($conversation2, $creator, $this->messages->create('lorem'), $creator);
 
 		Assert::true($this->conversations->isItemInConversation($conversation1, $creator, $item1));
 		Assert::false($this->conversations->isItemInConversation($conversation1, $creator, $item2));
@@ -653,8 +646,8 @@ class ConversationsFacadeTest extends TestCase
 		$creator = $this->users->create();
 		$conversation = $this->conversations->createConversation($creator);
 
-		$item1 = $this->conversations->addItemToConversation($conversation, $creator, $this->conversations->createMessage('lorem'), $creator);
-		$item2 = $this->conversations->addItemToConversation($conversation, $creator, $this->conversations->createMessage('lorem'), $creator);
+		$item1 = $this->conversations->addItemToConversation($conversation, $creator, $this->messages->create('lorem'), $creator);
+		$item2 = $this->conversations->addItemToConversation($conversation, $creator, $this->messages->create('lorem'), $creator);
 
 		$this->conversations->removeItem($item1);
 
@@ -670,7 +663,7 @@ class ConversationsFacadeTest extends TestCase
 		$creator = $this->users->create();
 		$conversation = $this->conversations->createConversation($creator);
 
-		$this->conversations->sendItem($conversation, $creator, $this->conversations->createMessage('lorem'));
+		$this->conversations->sendItem($conversation, $creator, $this->messages->create('lorem'));
 
 		$items = $this->conversations->findAllItemsByConversationAndUser($conversation, $creator)->toArray();
 		/** @var \Carrooi\Conversations\Model\Entities\IConversationItem[] $items */
@@ -699,9 +692,9 @@ class ConversationsFacadeTest extends TestCase
 		$user = $this->users->create();
 		$this->conversations->addUserToConversation($conversation, $user);
 
-		$this->conversations->sendItem($conversation, $user, $this->conversations->createMessage('lorem'));
-		$this->conversations->sendItem($conversation, $user, $this->conversations->createMessage('lorem'));
-		$this->conversations->sendItem($conversation, $user, $this->conversations->createMessage('lorem'));
+		$this->conversations->sendItem($conversation, $user, $this->messages->create('lorem'));
+		$this->conversations->sendItem($conversation, $user, $this->messages->create('lorem'));
+		$this->conversations->sendItem($conversation, $user, $this->messages->create('lorem'));
 
 		$items = $this->conversations->findAllItemsByConversationAndUser($conversation, $creator)->toArray();
 		/** @var \Carrooi\Conversations\Model\Entities\IConversationItem[] $items */
@@ -732,14 +725,14 @@ class ConversationsFacadeTest extends TestCase
 		$user = $this->users->create();
 		$this->conversations->addUserToConversation($conversation, $user);
 
-		$this->conversations->sendItem($conversation, $user, $this->conversations->createMessage('lorem'));
-		$this->conversations->sendItem($conversation, $user, $this->conversations->createMessage('lorem'));
-		$this->conversations->sendItem($conversation, $user, $this->conversations->createMessage('lorem'));
+		$this->conversations->sendItem($conversation, $user, $this->messages->create('lorem'));
+		$this->conversations->sendItem($conversation, $user, $this->messages->create('lorem'));
+		$this->conversations->sendItem($conversation, $user, $this->messages->create('lorem'));
 
 		$this->conversations->setReadConversation($conversation, $creator);
 
-		$this->conversations->sendItem($conversation, $user, $this->conversations->createMessage('lorem'));
-		$this->conversations->sendItem($conversation, $user, $this->conversations->createMessage('lorem'));
+		$this->conversations->sendItem($conversation, $user, $this->messages->create('lorem'));
+		$this->conversations->sendItem($conversation, $user, $this->messages->create('lorem'));
 
 		Assert::count(2, $this->conversations->findAllUnreadItems($conversation, $creator));
 	}

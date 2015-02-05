@@ -71,6 +71,9 @@ class ConversationsExtension extends CompilerExtension implements IEntityProvide
 			->setClass('Carrooi\Conversations\Model\Facades\EntitiesProvider')
 			->setArguments([$this->conversationClass, $this->conversationItemClass]);
 
+		$builder->addDefinition($this->prefix('facade.messages'))
+			->setClass('Carrooi\Conversations\Model\Facades\ConversationMessagesFacade');
+
 		$builder->addDefinition($this->prefix('facade.conversations'))
 			->setClass('Carrooi\Conversations\Model\Facades\ConversationsFacade');
 
