@@ -9,6 +9,7 @@ use Carrooi\Conversations\Model\Entities\IConversation;
 use Carrooi\Conversations\Model\Entities\IConversationAttachment;
 use Carrooi\Conversations\Model\Entities\IConversationItem;
 use Carrooi\Conversations\Model\Entities\IUser;
+use DateTime;
 use Kdyby\Doctrine\Dql\Join;
 use Kdyby\Doctrine\EntityManager;
 use Kdyby\Doctrine\ResultSet;
@@ -252,14 +253,23 @@ class ConversationItemsFacade extends Object
 	 */
 	public function setReadConversation(IConversation $conversation, IUser $user)
 	{
-		$this->em->transactional(function() use ($conversation, $user) {
-			foreach ($this->findAllUnreadItems($conversation, $user) as $item) {
-				$item->setRead();
-				$this->em->persist($item);
-			}
-		});
+		$where = $this->dao->createQueryBuilder()
+			->select('cut')->from('Carrooi\Conversations\Model\Entities\ConversationUserThread', 'cut')
+			->andWhere('cut.user = :user')
+			->andWhere('cut.conversation = :conversation')
+			->andWhere('cut.allowed = TRUE');
 
-		$this->em->flush();
+		$qb = $this->dao->createQueryBuilder();
+
+		$qb->update($this->entitiesProvider->getConversationItemClass(), 'i')
+			->set('i.readAt', ':now')
+			->andWhere('i.readAt IS NULL')
+			->andWhere($qb->expr()->in('i.conversationUserThread', $where->getDQL()))
+			->setParameter('now', new DateTime)
+			->setParameter('user', $user)
+			->setParameter('conversation', $conversation);
+
+		$qb->getQuery()->execute();
 
 		return $this;
 	}

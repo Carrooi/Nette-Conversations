@@ -294,7 +294,6 @@ class ConversationItemsFacadeTest extends TestCase
 
 	public function testSetReadConversation()
 	{
-		Environment::skip();
 		$this->createContainer();
 
 		$creator = $this->appUsers->create();
@@ -307,7 +306,7 @@ class ConversationItemsFacadeTest extends TestCase
 		$this->items->sendItem($conversation, $user, $this->messages->create('lorem'));
 		$this->items->sendItem($conversation, $user, $this->messages->create('lorem'));
 
-		$items = $this->items->findAllItemsByConversationAndUser($conversation, $creator)->toArray();
+		$items = $this->items->findAllUnreadItems($conversation, $creator)->toArray();
 		/** @var \Carrooi\Conversations\Model\Entities\IConversationItem[] $items */
 
 		Assert::count(3, $items);
@@ -315,14 +314,11 @@ class ConversationItemsFacadeTest extends TestCase
 		Assert::false($items[1]->isRead());
 		Assert::false($items[2]->isRead());
 
-		$this->items->setReadConversation($conversation, $user);
+		$this->items->setReadConversation($conversation, $creator);
 
-		$items = $this->items->findAllItemsByConversationAndUser($conversation, $creator)->toArray();
+		$items = $this->items->findAllUnreadItems($conversation, $creator)->toArray();
 
-		Assert::count(3, $items);
-		Assert::true($items[0]->isRead());
-		Assert::true($items[1]->isRead());
-		Assert::true($items[2]->isRead());
+		Assert::count(0, $items);
 	}
 
 
