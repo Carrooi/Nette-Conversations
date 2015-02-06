@@ -25,6 +25,9 @@ class ConversationUserThreadsFacadeTest extends TestCase
 	/** @var \Carrooi\Conversations\Model\Facades\ConversationsFacade */
 	private $conversations;
 
+	/** @var \Carrooi\Conversations\Model\Facades\ConversationItemsFacade */
+	private $items;
+
 	/** @var \Carrooi\Conversations\Model\Facades\ConversationMessagesFacade */
 	private $messages;
 
@@ -40,6 +43,7 @@ class ConversationUserThreadsFacadeTest extends TestCase
 		$container = $this->createContainer();
 
 		$this->conversations = $container->getByType('Carrooi\Conversations\Model\Facades\ConversationsFacade');
+		$this->items = $container->getByType('Carrooi\Conversations\Model\Facades\ConversationItemsFacade');
 		$this->messages = $container->getByType('Carrooi\Conversations\Model\Facades\ConversationMessagesFacade');
 		$this->userThreads = $container->getByType('Carrooi\Conversations\Model\Facades\ConversationUserThreadsFacade');
 		$this->appUsers = $container->getByType('CarrooiTests\ConversationsApp\Model\Facades\Users');
@@ -127,30 +131,6 @@ class ConversationUserThreadsFacadeTest extends TestCase
 		$this->userThreads->addUserToConversation($conversation, $user);
 
 		Assert::true($this->userThreads->isUserInConversation($conversation, $user));
-	}
-
-
-	public function testAddUserToConversation_cloneOldItems()
-	{
-		$this->createContainer();
-
-		$creator = $this->appUsers->create();
-		$conversation = $this->conversations->createConversation($creator);
-
-		$this->conversations->sendItem($conversation, $creator, $this->messages->create('lorem'));
-		$this->conversations->sendItem($conversation, $creator, $this->messages->create('lorem'));
-		$this->conversations->sendItem($conversation, $creator, $this->messages->create('lorem'));
-
-		foreach ($this->conversations->findAllItemsByConversationAndUser($conversation, $creator) as $item) {
-			$this->conversations->removeItem($item);
-		}
-
-		Assert::count(0, $this->conversations->findAllItemsByConversationAndUser($conversation, $creator));
-
-		$user = $this->appUsers->create();
-		$this->userThreads->addUserToConversation($conversation, $user);
-
-		Assert::count(3, $this->conversations->findAllItemsByConversationAndUser($conversation, $user));
 	}
 
 

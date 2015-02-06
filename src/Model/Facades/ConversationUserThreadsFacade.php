@@ -23,9 +23,6 @@ class ConversationUserThreadsFacade extends Object
 	/** @var \Kdyby\Doctrine\EntityDao */
 	private $dao;
 
-	/** @var \Carrooi\Conversations\Model\Facades\ConversationsFacade */
-	private $conversations;
-
 
 	/**
 	 * @param \Kdyby\Doctrine\EntityManager $em
@@ -33,17 +30,8 @@ class ConversationUserThreadsFacade extends Object
 	public function __construct(EntityManager $em)
 	{
 		$this->em = $em;
+
 		$this->dao = $em->getRepository(ConversationUserThread::getClassName());
-	}
-
-
-	/**
-	 * @internal
-	 * @param \Carrooi\Conversations\Model\Facades\ConversationsFacade $conversations
-	 */
-	public function _injectConversationsFacade(ConversationsFacade $conversations)
-	{
-		$this->conversations = $conversations;
 	}
 
 
@@ -81,18 +69,7 @@ class ConversationUserThreadsFacade extends Object
 		$userThread->setConversation($conversation);
 		$userThread->setUser($user);
 
-		$this->em->persist($userThread);
-
-		$oldItems = $this->conversations->findAllOriginalItems($conversation);
-
-		foreach ($oldItems as $item) {
-			$item = clone $item;
-			$item->setConversationUserThread($userThread);
-
-			$this->em->persist($item);
-		}
-
-		$this->em->flush();
+		$this->em->persist($userThread)->flush();
 
 		return $userThread;
 	}

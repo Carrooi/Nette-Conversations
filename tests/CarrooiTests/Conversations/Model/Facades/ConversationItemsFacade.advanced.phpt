@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Test: Carrooi\Conversations\Model\Facades\ConversationsFacade
+ * Test: Carrooi\Conversations\Model\Facades\ConversationItemsFacade
  *
- * @testCase CarrooiTests\Conversations\Model\Facades\ConversationsFacadeAdvancedTest
+ * @testCase CarrooiTests\Conversations\Model\Facades\ConversationItemsFacadeAdvancedTest
  * @author David Kudera
  */
 
@@ -18,40 +18,36 @@ require_once __DIR__ . '/../../../bootstrap.php';
  *
  * @author David Kudera
  */
-class ConversationsFacadeAdvancedTest extends TestCase
+class ConversationItemsFacadeAdvancedTest extends TestCase
 {
-
 
 
 	/** @var \Carrooi\Conversations\Model\Facades\ConversationsFacade */
 	private $conversations;
 
+	/** @var \Carrooi\Conversations\Model\Facades\ConversationItemsFacade */
+	private $items;
+
 	/** @var \Carrooi\Conversations\Model\Facades\ConversationMessagesFacade */
 	private $messages;
 
 	/** @var \CarrooiTests\ConversationsApp\Model\Facades\Users */
-	private $users;
+	private $appUsers;
 
 	/** @var \CarrooiTests\ConversationsApp\Model\Facades\Books */
 	private $books;
 
 
-	/**
-	 * @param string $customConfig
-	 * @return \Nette\DI\Container
-	 */
-	protected function createContainer($customConfig = 'config.advanced')
+	public function setUp()
 	{
 		$this->database = 'advanced';
-
-		$container = parent::createContainer($customConfig);
+		$container = $this->createContainer('config.advanced');
 
 		$this->conversations = $container->getByType('Carrooi\Conversations\Model\Facades\ConversationsFacade');
+		$this->items = $container->getByType('Carrooi\Conversations\Model\Facades\ConversationItemsFacade');
 		$this->messages = $container->getByType('Carrooi\Conversations\Model\Facades\ConversationMessagesFacade');
-		$this->users = $container->getByType('CarrooiTests\ConversationsApp\Model\Facades\Users');
+		$this->appUsers = $container->getByType('CarrooiTests\ConversationsApp\Model\Facades\Users');
 		$this->books = $container->getByType('CarrooiTests\ConversationsApp\Model\Facades\Books');
-
-		return $container;
 	}
 
 
@@ -59,7 +55,7 @@ class ConversationsFacadeAdvancedTest extends TestCase
 	{
 		parent::tearDown();
 
-		$this->conversations = $this->users = null;
+		$this->messages = null;
 	}
 
 
@@ -67,14 +63,14 @@ class ConversationsFacadeAdvancedTest extends TestCase
 	{
 		$this->createContainer();
 
-		$creator = $this->users->create();
+		$creator = $this->appUsers->create();
 		$conversation = $this->conversations->createConversation($creator);
 
-		$this->conversations->sendItem($conversation, $creator, $this->books->create());
-		$this->conversations->sendItem($conversation, $creator, $this->messages->create('lorem'));
-		$this->conversations->sendItem($conversation, $creator, $this->books->create());
+		$this->items->sendItem($conversation, $creator, $this->books->create());
+		$this->items->sendItem($conversation, $creator, $this->messages->create('lorem'));
+		$this->items->sendItem($conversation, $creator, $this->books->create());
 
-		$items = $this->conversations->findAllItemsByConversationAndUser($conversation, $creator)->toArray();
+		$items = $this->items->findAllItemsByConversationAndUser($conversation, $creator)->toArray();
 		/** @var \CarrooiTests\ConversationsApp\Model\Entities\ConversationItem[] $items */
 
 		Assert::count(3, $items);
@@ -92,4 +88,4 @@ class ConversationsFacadeAdvancedTest extends TestCase
 }
 
 
-run(new ConversationsFacadeAdvancedTest);
+run(new ConversationItemsFacadeAdvancedTest);
