@@ -2,22 +2,14 @@
 
 namespace Carrooi\Conversations\Model\Entities;
 
-use DateTime;
 use Doctrine\ORM\Mapping as ORM;
-use Kdyby\Doctrine\Entities\Attributes\Identifier;
-use Kdyby\Doctrine\Entities\BaseEntity;
 
 /**
  *
- * @ORM\MappedSuperclass
- *
  * @author David Kudera
  */
-abstract class BaseConversation extends BaseEntity implements IConversation
+trait TConversation
 {
-
-
-	use Identifier;
 
 
 	/**

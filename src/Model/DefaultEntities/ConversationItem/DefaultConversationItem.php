@@ -2,8 +2,11 @@
 
 namespace Carrooi\Conversations\Model\DefaultEntities\ConversationItem;
 
-use Carrooi\Conversations\Model\Entities\BaseConversationItem;
+use Carrooi\Conversations\Model\Entities\IConversationItem;
+use Carrooi\Conversations\Model\Entities\TConversationItem;
 use Doctrine\ORM\Mapping as ORM;
+use Kdyby\Doctrine\Entities\Attributes\Identifier;
+use Kdyby\Doctrine\Entities\BaseEntity;
 
 /**
  *
@@ -12,7 +15,12 @@ use Doctrine\ORM\Mapping as ORM;
  *
  * @author David Kudera
  */
-class DefaultConversationItem extends BaseConversationItem
+class DefaultConversationItem extends BaseEntity implements IConversationItem
 {
+
+
+	use Identifier;
+
+	use TConversationItem;
 
 }

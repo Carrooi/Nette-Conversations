@@ -3,21 +3,13 @@
 namespace Carrooi\Conversations\Model\Entities;
 
 use DateTime;
-use Doctrine\ORM\Mapping as ORM;
-use Kdyby\Doctrine\Entities\Attributes\Identifier;
-use Kdyby\Doctrine\Entities\BaseEntity;
 
 /**
  *
- * @ORM\MappedSuperclass
- *
  * @author David Kudera
  */
-abstract class BaseConversationItem extends BaseEntity implements IConversationItem
+trait TConversationItem
 {
-
-
-	use Identifier;
 
 
 	/**
