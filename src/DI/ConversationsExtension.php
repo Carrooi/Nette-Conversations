@@ -67,10 +67,6 @@ class ConversationsExtension extends CompilerExtension implements IEntityProvide
 
 		$config['attachments'] = Helpers::merge($config['attachments'], $this->defaultAttachments);
 
-		$builder->addDefinition($this->prefix('facade.entities'))
-			->setClass('Carrooi\Conversations\Model\Facades\EntitiesProvider')
-			->setArguments([$this->conversationClass, $this->conversationItemClass]);
-
 		$builder->addDefinition($this->prefix('facade.messages'))
 			->setClass('Carrooi\Conversations\Model\Facades\ConversationMessagesFacade');
 
@@ -81,13 +77,16 @@ class ConversationsExtension extends CompilerExtension implements IEntityProvide
 			->setClass('Carrooi\Conversations\Model\Facades\ConversationUserThreadsFacade');
 
 		$builder->addDefinition($this->prefix('facade.items'))
-			->setClass('Carrooi\Conversations\Model\Facades\ConversationItemsFacade');
+			->setClass('Carrooi\Conversations\Model\Facades\ConversationItemsFacade')
+			->setArguments([$this->conversationItemClass]);
 
 		$builder->addDefinition($this->prefix('facade.conversations'))
-			->setClass('Carrooi\Conversations\Model\Facades\ConversationsFacade');
+			->setClass('Carrooi\Conversations\Model\Facades\ConversationsFacade')
+			->setArguments([$this->conversationClass, $this->conversationItemClass]);
 
 		$builder->addDefinition($this->prefix('events.relations'))
 			->setClass('Carrooi\Conversations\Model\Events\ConversationsRelationsSubscriber')
+			->setArguments([$this->conversationClass, $this->conversationItemClass])
 			->addTag(EventsExtension::TAG_SUBSCRIBER);
 
 		$associations = $builder->addDefinition($this->prefix('facade.associations'))

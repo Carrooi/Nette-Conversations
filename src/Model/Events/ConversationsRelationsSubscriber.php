@@ -4,7 +4,6 @@ namespace Carrooi\Conversations\Model\Events;
 
 use Carrooi\Conversations\InvalidStateException;
 use Carrooi\Conversations\Model\Facades\AssociationsManager;
-use Carrooi\Conversations\Model\Facades\EntitiesProvider;
 use DateTime;
 use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Event\LoadClassMetadataEventArgs;
@@ -24,21 +23,26 @@ class ConversationsRelationsSubscriber extends Object implements Subscriber
 	const ASSOCIATION_FIELD_NAME = 'conversationItems';
 
 
-	/** @var \Carrooi\Conversations\Model\Facades\EntitiesProvider */
-	private $entitiesProvider;
-
 	/** @var \Carrooi\Conversations\Model\Facades\AssociationsManager */
 	private $associations;
 
+	/** @var string */
+	private $conversationClass;
+
+	/** @var string */
+	private $conversationItemClass;
+
 
 	/**
-	 * @param \Carrooi\Conversations\Model\Facades\EntitiesProvider $entitiesProvider
+	 * @param string $conversationClass
+	 * @param string $conversationItemClass
 	 * @param \Carrooi\Conversations\Model\Facades\AssociationsManager $associations
 	 */
-	public function __construct(EntitiesProvider $entitiesProvider, AssociationsManager $associations)
+	public function __construct($conversationClass, $conversationItemClass, AssociationsManager $associations)
 	{
-		$this->entitiesProvider = $entitiesProvider;
 		$this->associations = $associations;
+		$this->conversationClass = $conversationClass;
+		$this->conversationItemClass = $conversationItemClass;
 	}
 
 
@@ -64,8 +68,8 @@ class ConversationsRelationsSubscriber extends Object implements Subscriber
 		$implements = class_implements($class);
 
 		if (
-			(in_array('Carrooi\Conversations\Model\Entities\IConversation', $implements) && $class !== $this->entitiesProvider->getConversationClass()) ||
-			(in_array('Carrooi\Conversations\Model\Entities\IConversationItem', $implements) && $class !== $this->entitiesProvider->getConversationItemClass())
+			(in_array('Carrooi\Conversations\Model\Entities\IConversation', $implements) && $class !== $this->conversationClass) ||
+			(in_array('Carrooi\Conversations\Model\Entities\IConversationItem', $implements) && $class !== $this->conversationItemClass)
 		) {
 			$metadata->setPrimaryTable([
 				'name' => $metadata->getTableName(). '_unused',		// don't know any other way how to create testing schema without temporary removing some files
@@ -73,7 +77,7 @@ class ConversationsRelationsSubscriber extends Object implements Subscriber
 			return;
 		}
 
-		if ($class === $this->entitiesProvider->getConversationItemClass()) {
+		if ($class === $this->conversationItemClass) {
 			foreach ($this->associations->getAssociations() as $assocClass => $field) {
 				if (!$metadata->hasAssociation($field)) {
 					throw new InvalidStateException('Missing manyToOne association at '. $class. '::$'. $field. '.');

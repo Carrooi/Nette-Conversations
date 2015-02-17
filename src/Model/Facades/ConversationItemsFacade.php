@@ -32,32 +32,51 @@ class ConversationItemsFacade extends Object
 	/** @var \Carrooi\Conversations\Model\Facades\AssociationsManager */
 	private $associationsManager;
 
-	/** @var \Carrooi\Conversations\Model\Facades\EntitiesProvider */
-	private $entitiesProvider;
-
 	/** @var \Carrooi\Conversations\Model\Facades\ConversationUserThreadsFacade */
 	private $userThreads;
 
 	/** @var \Carrooi\Conversations\Model\Facades\UsersFacade */
 	private $users;
 
+	/** @var string */
+	private $class;
+
 
 	/**
+	 * @param string $class
 	 * @param \Kdyby\Doctrine\EntityManager $em
 	 * @param \Carrooi\Conversations\Model\Facades\AssociationsManager $associationsManager
-	 * @param \Carrooi\Conversations\Model\Facades\EntitiesProvider $entitiesProvider
 	 * @param \Carrooi\Conversations\Model\Facades\ConversationUserThreadsFacade $userThreads
 	 * @param \Carrooi\Conversations\Model\Facades\UsersFacade $users
 	 */
-	public function __construct(EntityManager $em, AssociationsManager $associationsManager, EntitiesProvider $entitiesProvider, ConversationUserThreadsFacade $userThreads, UsersFacade $users)
+	public function __construct($class, EntityManager $em, AssociationsManager $associationsManager, ConversationUserThreadsFacade $userThreads, UsersFacade $users)
 	{
 		$this->em = $em;
 		$this->associationsManager = $associationsManager;
-		$this->entitiesProvider = $entitiesProvider;
 		$this->userThreads = $userThreads;
 		$this->users = $users;
+		$this->class = $class;
 
 		$this->dao = $em->getRepository('Carrooi\Conversations\Model\Entities\IConversationItem');
+	}
+
+
+	/**
+	 * @return string
+	 */
+	public function getClass()
+	{
+		return $this->class;
+	}
+
+
+	/**
+	 * @return \Carrooi\Conversations\Model\Entities\IConversationItem
+	 */
+	public function createNew()
+	{
+		$class = $this->getClass();
+		return new $class;
 	}
 
 
@@ -86,7 +105,7 @@ class ConversationItemsFacade extends Object
 			$userThread = $this->userThreads->findOriginalUserThread($conversation);
 		}
 
-		$item = $this->entitiesProvider->createConversationItemEntity();
+		$item = $this->createNew();
 		$item->setConversationUserThread($userThread);
 		$item->setSender($sender);
 
@@ -261,7 +280,7 @@ class ConversationItemsFacade extends Object
 
 		$qb = $this->dao->createQueryBuilder();
 
-		$qb->update($this->entitiesProvider->getConversationItemClass(), 'i')
+		$qb->update($this->getClass(), 'i')
 			->set('i.readAt', ':now')
 			->andWhere('i.readAt IS NULL')
 			->andWhere($qb->expr()->in('i.conversationUserThread', $where->getDQL()))

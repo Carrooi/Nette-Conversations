@@ -23,20 +23,44 @@ class ConversationsFacade extends Object
 	/** @var \Kdyby\Doctrine\EntityDao */
 	private $dao;
 
-	/** @var \Carrooi\Conversations\Model\Facades\EntitiesProvider */
-	private $entitiesProvider;
+	/** @var string */
+	private $conversationClass;
+
+	/** @var string */
+	private $conversationItemClass;
 
 
 	/**
+	 * @param string $conversationClass
+	 * @param string $conversationItemClass
 	 * @param \Kdyby\Doctrine\EntityManager $em
-	 * @param \Carrooi\Conversations\Model\Facades\EntitiesProvider $entitiesProvider
 	 */
-	public function __construct(EntityManager $em, EntitiesProvider $entitiesProvider)
+	public function __construct($conversationClass, $conversationItemClass, EntityManager $em)
 	{
 		$this->em = $em;
-		$this->entitiesProvider = $entitiesProvider;
+		$this->conversationClass = $conversationClass;
+		$this->conversationItemClass = $conversationItemClass;
 
 		$this->dao = $em->getRepository('Carrooi\Conversations\Model\Entities\IConversation');
+	}
+
+
+	/**
+	 * @return string
+	 */
+	public function getConversationClass()
+	{
+		return $this->conversationClass;
+	}
+
+
+	/**
+	 * @return \Carrooi\Conversations\Model\Entities\IConversation
+	 */
+	public function createNew()
+	{
+		$class = $this->getConversationClass();
+		return new $class;
 	}
 
 
@@ -46,7 +70,7 @@ class ConversationsFacade extends Object
 	 */
 	public function createConversation(IUser $creator)
 	{
-		$conversation = $this->entitiesProvider->createConversationEntity();
+		$conversation = $this->createNew();
 		$conversation->setCreator($creator);
 
 		$originalThread = new ConversationUserThread;
@@ -88,7 +112,7 @@ class ConversationsFacade extends Object
 	{
 		$query = $this->dao->createQueryBuilder('c')
 			->join('Carrooi\Conversations\Model\Entities\ConversationUserThread', 'cut', Join::WITH, 'cut.conversation = c')
-			->join($this->entitiesProvider->getConversationItemClass(), 'ci', Join::WITH, 'ci.conversationUserThread = cut')
+			->join($this->conversationItemClass, 'ci', Join::WITH, 'ci.conversationUserThread = cut')
 			->andWhere('cut.user = :user')->setParameter('user', $user)
 			->andWhere('cut.allowed = TRUE')
 			->andWhere('ci.readAt IS NULL')
