@@ -46,6 +46,15 @@ class ConversationsFacade extends Object
 
 
 	/**
+	 * @return \Kdyby\Doctrine\EntityManager
+	 */
+	protected function getEntityManager()
+	{
+		return $this->em;
+	}
+
+
+	/**
 	 * @return string
 	 */
 	public function getConversationClass()
@@ -80,7 +89,7 @@ class ConversationsFacade extends Object
 		$userThread->setConversation($conversation);
 		$userThread->setUser($creator);
 
-		$this->em->persist([
+		$this->getEntityManager()->persist([
 			$conversation, $originalThread, $userThread,
 		])->flush();
 

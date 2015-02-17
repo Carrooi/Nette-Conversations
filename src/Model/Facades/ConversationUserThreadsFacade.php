@@ -36,6 +36,15 @@ class ConversationUserThreadsFacade extends Object
 
 
 	/**
+	 * @return \Kdyby\Doctrine\EntityManager
+	 */
+	protected function getEntityManager()
+	{
+		return $this->em;
+	}
+
+
+	/**
 	 * @param \Carrooi\Conversations\Model\Entities\IConversation $conversation
 	 * @param \Carrooi\Conversations\Model\Entities\IUser $user
 	 * @return \Carrooi\Conversations\Model\Entities\ConversationUserThread
@@ -59,7 +68,7 @@ class ConversationUserThreadsFacade extends Object
 				throw new InvalidStateException('User '. $user->getId(). ' is already in conversation '. $conversation->getId(). '.');
 			} else {
 				$oldUserThread->allow();
-				$this->em->persist($oldUserThread)->flush();
+				$this->getEntityManager()->persist($oldUserThread)->flush();
 
 				return $oldUserThread;
 			}
@@ -69,7 +78,7 @@ class ConversationUserThreadsFacade extends Object
 		$userThread->setConversation($conversation);
 		$userThread->setUser($user);
 
-		$this->em->persist($userThread)->flush();
+		$this->getEntityManager()->persist($userThread)->flush();
 
 		return $userThread;
 	}
@@ -93,7 +102,7 @@ class ConversationUserThreadsFacade extends Object
 		$userThread = $this->findUserThreadByConversationAndUser($conversation, $user);
 		$userThread->deny();
 
-		$this->em->persist($userThread)->flush();
+		$this->getEntityManager()->persist($userThread)->flush();
 
 		return $this;
 	}
@@ -115,7 +124,7 @@ class ConversationUserThreadsFacade extends Object
 		}
 
 		$userThread = $this->findUserThreadByConversationAndUser($conversation, $user);
-		$this->em->remove($userThread)->flush();
+		$this->getEntityManager()->remove($userThread)->flush();
 
 		return $this;
 	}

@@ -62,6 +62,15 @@ class ConversationItemsFacade extends Object
 
 
 	/**
+	 * @return \Kdyby\Doctrine\EntityManager
+	 */
+	protected function getEntityManager()
+	{
+		return $this->em;
+	}
+
+
+	/**
 	 * @return string
 	 */
 	public function getClass()
@@ -118,8 +127,8 @@ class ConversationItemsFacade extends Object
 
 		$attachment->addConversationItem($item);
 
-		$this->em->transactional(function() use ($item, $attachment) {
-			$this->em->persist([
+		$this->getEntityManager()->transactional(function() use ($item, $attachment) {
+			$this->getEntityManager()->persist([
 				$item, $attachment
 			])->flush();
 		});
@@ -136,7 +145,7 @@ class ConversationItemsFacade extends Object
 	 */
 	public function sendItem(IConversation $conversation, IUser $sender, IConversationAttachment $attachment)
 	{
-		$this->em->transactional(function() use ($conversation, $sender, $attachment) {
+		$this->getEntityManager()->transactional(function() use ($conversation, $sender, $attachment) {
 			$this->addItemToConversation($conversation, $sender, $attachment);		// store original
 
 			$users = $this->users->findAllUsersInConversation($conversation);
@@ -162,10 +171,10 @@ class ConversationItemsFacade extends Object
 			$item = clone $item;
 			$item->setConversationUserThread($userThread);
 
-			$this->em->persist($item);
+			$this->getEntityManager()->persist($item);
 		}
 
-		$this->em->flush();
+		$this->getEntityManager()->flush();
 
 		return $this;
 	}
@@ -207,7 +216,7 @@ class ConversationItemsFacade extends Object
 	 */
 	public function removeItem(IConversationItem $item)
 	{
-		$this->em->remove($item)->flush();
+		$this->getEntityManager()->remove($item)->flush();
 		return $this;
 	}
 

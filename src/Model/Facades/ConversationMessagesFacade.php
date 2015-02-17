@@ -28,6 +28,15 @@ class ConversationMessagesFacade extends Object
 
 
 	/**
+	 * @return \Kdyby\Doctrine\EntityManager
+	 */
+	protected function getEntityManager()
+	{
+		return $this->em;
+	}
+
+
+	/**
 	 * @param string $text
 	 * @return \Carrooi\Conversations\Model\Entities\ConversationMessage
 	 */
@@ -36,7 +45,7 @@ class ConversationMessagesFacade extends Object
 		$message = new ConversationMessage;
 		$message->setText($text);
 
-		$this->em->persist($message)->flush($message);
+		$this->getEntityManager()->persist($message)->flush($message);
 
 		return $message;
 	}
